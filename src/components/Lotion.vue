@@ -4,14 +4,15 @@
       class="px-4 sm:px-0 focus:outline-none focus-visible:outline-none text-5xl font-bold mb-12"
       :class="props.page.name ? '' : 'empty'">
       {{ props.page.name || '' }}
-    </h1>
+    </h1>    
+    <p class="pb-10">OpenAI API Key: <input v-model="key" placeholder="Paste Here"/></p>
     <draggable id="blocks" tag="div" :list="props.page.blocks"  handle=".handle"
       v-bind="dragOptions" class="-ml-24 space-y-2 pb-4">
       <transition-group type="transition">
         <BlockComponent :block="block" v-for="block, i in props.page.blocks" :key="i" :id="'block-'+block.id"
           :ref="el => blockElements[i] = (el as unknown as typeof Block)"
           @deleteBlock="deleteBlock(i)"
-          @newBlock="insertBlock(i)"
+          @newBlock="insertBlock(i, '')"
           @moveToPrevChar="() => { if (blockElements[i-1]) blockElements[i-1].moveToEnd(); scrollIntoView(); }"
           @moveToNextChar="() => { if (blockElements[i+1]) blockElements[i+1].moveToStart(); scrollIntoView(); }"
           @moveToPrevLine="() => { if (blockElements[i-1]) blockElements[i-1].moveToLastLine(); scrollIntoView(); }"
@@ -22,84 +23,124 @@
           />
       </transition-group>
     </draggable>
+    <!-- </div> -->
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
   </div>
 </template>
 
 <script setup lang="ts">
+import { Configuration, OpenAIApi } from 'openai'
 import { ref, onBeforeUpdate, PropType } from 'vue'
 import { VueDraggableNext as draggable } from 'vue-draggable-next'
 import { Block, BlockType, isTextBlock } from '@/utils/types'
 import BlockComponent from './Block.vue'
 import { v4 as uuidv4 } from 'uuid';
 
+const key = ref('')
+
 const props = defineProps({
   page: {
     type: Object as PropType<{ name:string, blocks:Block[] }>,
     required: true,
-  }
+  },
 })
+
 
 const editor = ref<HTMLDivElement|null>(null)
 document.addEventListener('mousedown', (event:MouseEvent) => {
-  // Automatically focus on nearest block on click
-  const blocks = document.getElementById('blocks')
-  const title = document.getElementById('title')
-  const editorRect = editor.value?.getClientRects()[0]
-  // Check that click is outside Editor
-  if ((event.clientX < ((editorRect as DOMRect).left || -1)) || (event.clientX > (editorRect?.right || window.innerWidth))) {
-    // Focus on title
-    const titleRect = title?.getClientRects()[0]
-    if (event.clientY > (titleRect?.top || window.innerHeight) && event.clientY < (titleRect?.bottom || 0)) {
-      // Check if click is on left or right side
-      const rect = title?.getClientRects()[0]
-      let moveToStart = true
-      if (event.x > (rect as DOMRect).right) moveToStart = false 
-      const selection = window.getSelection()
-      const range = document.createRange()
-      range.selectNodeContents(title as Node)
-      range.collapse(moveToStart)
-      selection?.removeAllRanges()
-      selection?.addRange(range)
-      return
-    }
-    // or nearest block
-    const blockRects = Array.from(blocks?.children as HTMLCollection)
-    const block = blockRects.find(child => {
-      const rect = child.getClientRects()[0]
-      return event.clientY > rect.top && event.clientY < rect.bottom
-    })
-    const blockIdx = blockRects.findIndex(child => {
-      const rect = child.getClientRects()[0]
-      return event.clientY > rect.top && event.clientY < rect.bottom
-    })
-    if (block) {
-      // Check if click is on left or right side
-      const rect = block.getClientRects()[0]
-      if (event.x < rect.left) {
-        // Move to start of block
-        blockElements.value[blockIdx].moveToStart()
-      } else {
-        // Move to end of block
-        blockElements.value[blockIdx].moveToEnd()
+  const input = event.target as HTMLElement;
+  if (input.innerText == "Submit") {
+    console.log(key.value)
+    const configuration = new Configuration({
+        apiKey: key.value,
+    });
+    const openai = new OpenAIApi(configuration);
+
+    let inputArray = []
+    let postDivider = false
+    for (let i = 0; i < blockElements.value.length; i++) {
+      postDivider = props.page.blocks[i].type == "DIVIDER" || postDivider
+      if (blockElements.value[i] && postDivider) {
+        inputArray.push(blockElements.value[i].getTextContent())
       }
-      return
     }
+    const inputString = inputArray.join('\n')
+    console.log(inputString)
+    openai.createCompletion({
+      model: "text-davinci-002",
+      prompt: inputString,
+      max_tokens: 64,
+      temperature: 0,
+    }).then((response) => {
+      // blockElements.value[blockElements.value.length-1].value = response.data.choices[0].text
+      insertBlock(props.page.blocks.length-1, response.data.choices[0].text)
+    });
+
+
+    // const blocks = document.getElementById('blocks')
+    // const text = blockElements.value.forEach((block) => {block})
+    // console.log(blocks?.children)
+  } else {
+    // Automatically focus on nearest block on click
+    const blocks = document.getElementById('blocks')
+    const title = document.getElementById('title')
+    const editorRect = editor.value?.getClientRects()[0]
+    // Check that click is outside Editor
+    if ((event.clientX < ((editorRect as DOMRect).left || -1)) || (event.clientX > (editorRect?.right || window.innerWidth))) {
+      // Focus on title
+      const titleRect = title?.getClientRects()[0]
+      if (event.clientY > (titleRect?.top || window.innerHeight) && event.clientY < (titleRect?.bottom || 0)) {
+        // Check if click is on left or right side
+        const rect = title?.getClientRects()[0]
+        let moveToStart = true
+        if (event.x > (rect as DOMRect).right) moveToStart = false 
+        const selection = window.getSelection()
+        const range = document.createRange()
+        range.selectNodeContents(title as Node)
+        range.collapse(moveToStart)
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+        return
+      }
+      // or nearest block
+      const blockRects = Array.from(blocks?.children as HTMLCollection)
+      const block = blockRects.find(child => {
+        const rect = child.getClientRects()[0]
+        return event.clientY > rect.top && event.clientY < rect.bottom
+      })
+      const blockIdx = blockRects.findIndex(child => {
+        const rect = child.getClientRects()[0]
+        return event.clientY > rect.top && event.clientY < rect.bottom
+      })
+      if (block) {
+        // Check if click is on left or right side
+        const rect = block.getClientRects()[0]
+        if (event.x < rect.left) {
+          // Move to start of block
+          blockElements.value[blockIdx].moveToStart()
+        } else {
+          // Move to end of block
+          blockElements.value[blockIdx].moveToEnd()
+        }
+        return
+      }
+    }
+    // If cursor is between Submit button and last block, insert block there 
+    const lastBlockRect = blocks?.lastElementChild?.getClientRects()[0]
+    if (!lastBlockRect) return
+    if (event.clientX > (lastBlockRect as DOMRect).left && event.clientX < (lastBlockRect as DOMRect).right
+      && event.clientY > (lastBlockRect as DOMRect).bottom) {
+        const lastBlock = props.page.blocks[props.page.blocks.length-1]
+        const lastBlockComponent = blockElements.value[props.page.blocks.length-1]
+        if (lastBlock.type === BlockType.Text && lastBlockComponent.getTextContent() === '') {
+          // If last block is empty Text, focus on last block
+          setTimeout(lastBlockComponent.moveToEnd)
+        } else {
+          // Otherwise add new empty Text block
+          insertBlock(props.page.blocks.length-1, '')
+        }
+      }
   }
-  // If cursor is between Submit button and last block, insert block there 
-  const lastBlockRect = blocks?.lastElementChild?.getClientRects()[0]
-  if (!lastBlockRect) return
-  if (event.clientX > (lastBlockRect as DOMRect).left && event.clientX < (lastBlockRect as DOMRect).right
-    && event.clientY > (lastBlockRect as DOMRect).bottom) {
-      const lastBlock = props.page.blocks[props.page.blocks.length-1]
-      const lastBlockComponent = blockElements.value[props.page.blocks.length-1]
-      if (lastBlock.type === BlockType.Text && lastBlockComponent.getTextContent() === '') {
-        // If last block is empty Text, focus on last block
-        setTimeout(lastBlockComponent.moveToEnd)
-      } else {
-        // Otherwise add new empty Text block
-        insertBlock(props.page.blocks.length-1)
-      }
-    }
 })
 
 const dragOptions = {
@@ -124,14 +165,25 @@ function scrollIntoView () {
   }
 }
 
-function insertBlock (blockIdx: number) {
-  props.page.blocks.splice(blockIdx + 1, 0, {
-    id: uuidv4(),
-    type: BlockType.Text,
-    details: {
-      value: '<p></p>',
-    },
-  })
+function insertBlock (blockIdx: number, value: string) {
+  if (value) {
+    props.page.blocks.splice(blockIdx + 1, 0, {
+      id: uuidv4(),
+      type: BlockType.Text,
+      details: {
+        value: '<p><strong>' + value + '</strong></p>',
+      },
+    })
+  } else {
+    props.page.blocks.splice(blockIdx + 1, 0, {
+      id: uuidv4(),
+      type: BlockType.Text,
+      details: {
+        value: '<p></p>',
+      },
+    })
+
+  }
   setTimeout(() => {
     blockElements.value[blockIdx+1].moveToStart()
     scrollIntoView()
@@ -142,7 +194,7 @@ function deleteBlock (blockIdx: number) {
   props.page.blocks.splice(blockIdx, 1)
   // Always keep at least one block
   if (props.page.blocks.length === 0) {
-    insertBlock(0)
+    insertBlock(0, '')
   }
 }
 
@@ -151,7 +203,7 @@ function setBlockType (blockIdx: number, type: BlockType) {
   props.page.blocks[blockIdx].type = type
   if (type === BlockType.Divider) {
     props.page.blocks[blockIdx].details = {}
-    insertBlock(blockIdx)
+    insertBlock(blockIdx, '')
   } else setTimeout(() => blockElements.value[blockIdx].moveToEnd())
 }
 
@@ -191,7 +243,7 @@ function merge (blockIdx: number) {
 
 function split (blockIdx: number) {
   const caretPos = blockElements.value[blockIdx].getCaretPos()
-  insertBlock(blockIdx)
+  insertBlock(blockIdx, '')
   props.page.blocks[blockIdx+1].details.value = (caretPos.tag ? `<p><${caretPos.tag}>` : '<p>') + props.page.blocks[blockIdx].details.value?.slice(caretPos.pos)
   if (isTextBlock(props.page.blocks[blockIdx].type)) {
     props.page.blocks[blockIdx].details.value = props.page.blocks[blockIdx].details.value?.slice(0, caretPos.pos) + (caretPos.tag ? `</${caretPos.tag}></p>` : '</p>')

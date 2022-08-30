@@ -1,7 +1,7 @@
 <template>
   <div class="flex">
     <div class="sticky top-0 h-screen overflow-y-auto bg-neutral-50">
-      <Markdown :page="page" />
+      <!-- <Markdown :page="page" /> -->
     </div>
     <div class="shrink-0 px-24 min-w-[50%] mx-auto">
       <Lotion :page="page" />
@@ -17,71 +17,65 @@ import Lotion from './Lotion.vue'
 import { v4 as uuidv4 } from 'uuid';
 
 const page = ref({
-  name: '🧴 Lotion',
-  blocks:[{
+  name: 'HyperPrompt',
+  blocks:[
+  {
     id: uuidv4(),
-    type: BlockType.H1,
+    type: BlockType.Text,
     details: {
-      value: 'Get Started'
+      value: '<p style="color:green">👋 Welcome! This is a private page for you to play around with.</p>'
     },
-  }, {
+  },
+  {
+    id: uuidv4(),
+    type: BlockType.Text,
+    details: {
+      value: '📥 Each line is a block. Text is passed in the order of the blocks as input to GPT-3.'
+    },
+  },
+  {
+    id: uuidv4(),
+    type: BlockType.Text,
+    details: {
+      value: '📤 This will generate an output, which is added as another block.'
+    },
+  },
+  {
+    id: uuidv4(),
+    type: BlockType.Text,
+    details: {
+      value: '💾 Everything above the divider is in the buffer and is not sent to the model. You can store work in progress prompts here.'
+    },
+  },
+  {
     id: uuidv4(),
     type: BlockType.Divider,
-    details: {},
-  }, {
+    details: {
+      value: 'Divider'
+    },
+  },
+  {
     id: uuidv4(),
     type: BlockType.Text,
     details: {
-      value: '<p>👋 Welcome! This is a private page for you to play around with.</p>'
+      value: 'Everything below the divider is sent to the model.'
     },
-  }, {
+  },
+  {
     id: uuidv4(),
     type: BlockType.Text,
     details: {
-      value: '<p>Give these things a try:</p>'
+      value: 'Delete these blocks to get started.'
     },
-  }, {
+  },
+  {
     id: uuidv4(),
     type: BlockType.Text,
     details: {
-      value: '<p>1. Hover on the left of each line for quick actions</p>'
+      value: 'Who was Marcus Aurelius?'
     },
-  }, {
-    id: uuidv4(),
-    type: BlockType.Text,
-    details: {
-      value: '<p>2. Click on the + button to add a new line</p>'
-    },
-  }, {
-    id: uuidv4(),
-    type: BlockType.Text,
-    details: {
-      value: '<p>3. Drag the ⋮⋮ button to reorder</p>'
-    },
-  }, {
-    id: uuidv4(),
-    type: BlockType.Text,
-    details: {
-      value: '<p>4. Click the trash icon to delete this block</p>'
-    },
-  }, {
-    id: uuidv4(),
-    type: BlockType.Text,
-    details: {
-      value: '<p>5. <strong>Bold</strong> and <em>italicize</em> using markdown e.g. *italic* or **bold**</p>'
-    },
-  }, {
-    id: uuidv4(),
-    type: BlockType.Text,
-    details: {
-      value: '<p>6. Add headers and dividers with \'#\', \'##\' or \'---\' followed by a space</p>'
-    },
-  }, {
-    id: uuidv4(),
-    type: BlockType.Text,
-    details: {
-      value: '<p>7. Type \'/\' for a menu to quickly switch blocks and search by typing</p>'
-    },
-  },]
+  },
+
+  ]
 })
 </script>
