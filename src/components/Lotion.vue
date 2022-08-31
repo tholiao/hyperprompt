@@ -6,23 +6,26 @@
       {{ props.page.name || '' }}
     </h1>    
     <p class="pb-10">OpenAI API Key: <input v-model="key" placeholder="Paste Here"/></p>
-    <draggable id="blocks" tag="div" :list="props.page.blocks"  handle=".handle"
-      v-bind="dragOptions" class="-ml-24 space-y-2 pb-4">
-      <transition-group type="transition">
-        <BlockComponent :block="block" v-for="block, i in props.page.blocks" :key="i" :id="'block-'+block.id"
-          :ref="el => blockElements[i] = (el as unknown as typeof Block)"
-          @deleteBlock="deleteBlock(i)"
-          @newBlock="insertBlock(i, '')"
-          @moveToPrevChar="() => { if (blockElements[i-1]) blockElements[i-1].moveToEnd(); scrollIntoView(); }"
-          @moveToNextChar="() => { if (blockElements[i+1]) blockElements[i+1].moveToStart(); scrollIntoView(); }"
-          @moveToPrevLine="() => { if (blockElements[i-1]) blockElements[i-1].moveToLastLine(); scrollIntoView(); }"
-          @moveToNextLine="() => { if (blockElements[i+1]) blockElements[i+1].moveToFirstLine(); scrollIntoView(); }"
-          @merge="merge(i)"
-          @split="split(i)"
-          @setBlockType="type => setBlockType(i, type)"
-          />
-      </transition-group>
-    </draggable>
+
+    <!-- <div class="border-2 rounded-md border-black pl-20 p-2"> -->
+      <draggable id="blocks" tag="div" :list="props.page.blocks"  handle=".handle"
+        v-bind="dragOptions" class="-ml-24 space-y-2 pb-4">
+        <transition-group type="transition">
+          <BlockComponent :block="block" v-for="block, i in props.page.blocks" :key="i" :id="'block-'+block.id"
+            :ref="el => blockElements[i] = (el as unknown as typeof Block)"
+            @deleteBlock="deleteBlock(i)"
+            @newBlock="insertBlock(i, '')"
+            @moveToPrevChar="() => { if (blockElements[i-1]) blockElements[i-1].moveToEnd(); scrollIntoView(); }"
+            @moveToNextChar="() => { if (blockElements[i+1]) blockElements[i+1].moveToStart(); scrollIntoView(); }"
+            @moveToPrevLine="() => { if (blockElements[i-1]) blockElements[i-1].moveToLastLine(); scrollIntoView(); }"
+            @moveToNextLine="() => { if (blockElements[i+1]) blockElements[i+1].moveToFirstLine(); scrollIntoView(); }"
+            @merge="merge(i)"
+            @split="split(i)"
+            @setBlockType="type => setBlockType(i, type)"
+            />
+        </transition-group>
+      </draggable>
+    <!-- </div> -->
     <!-- </div> -->
     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
   </div>
@@ -33,6 +36,7 @@ import { Configuration, OpenAIApi } from 'openai'
 import { ref, onBeforeUpdate, PropType } from 'vue'
 import { VueDraggableNext as draggable } from 'vue-draggable-next'
 import { Block, BlockType, isTextBlock } from '@/utils/types'
+// import { temperature, maxLength } from './Settings.vue'
 import BlockComponent from './Block.vue'
 import { v4 as uuidv4 } from 'uuid';
 
@@ -43,11 +47,20 @@ const props = defineProps({
     type: Object as PropType<{ name:string, blocks:Block[] }>,
     required: true,
   },
+  temperature: {
+    type: Number as PropType<number>,
+    required: true,
+  },
+  maxLength: {
+    type: Number as PropType<number>,
+    required: true,
+  },
 })
 
 
 const editor = ref<HTMLDivElement|null>(null)
 document.addEventListener('mousedown', (event:MouseEvent) => {
+  console.log(props.temperature, props.maxLength)
   const input = event.target as HTMLElement;
   if (input.innerText == "Submit") {
     console.log(key.value)

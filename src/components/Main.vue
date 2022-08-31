@@ -1,18 +1,22 @@
 <template>
   <div class="flex">
-    <div class="sticky top-0 h-screen overflow-y-auto bg-neutral-50">
-      <!-- <Markdown :page="page" /> -->
-    </div>
     <div class="shrink-0 px-24 min-w-[50%] mx-auto">
       <Lotion :page="page" />
     </div>
+    <div class="sticky top-0 h-screen overflow-y-auto bg-neutral-50 max-w-sm">
+      <Settings :page="page"/>
+      <div> Hello {{ this.$refs.temperature }}</div>
+      <div>{{ this.$refs.maxLength }}</div>
+    </div>
   </div>
+
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { BlockType } from '@/utils/types'
 import Markdown from './Markdown.vue'
+import Settings from './Settings.vue'
 import Lotion from './Lotion.vue'
 import { v4 as uuidv4 } from 'uuid';
 
