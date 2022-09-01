@@ -34,6 +34,6 @@ import { ref, computed } from 'vue'
 const temperature = ref(0.7)
 const maxLength = ref(256)
 
-defineExpose({ temperature, maxLength })
+// defineEmits({ temperature, maxLength })
 
 </script>

@@ -44,15 +44,15 @@ const key = ref('')
 
 const props = defineProps({
   page: {
-    type: Object as PropType<{ name:string, blocks:Block[] }>,
-    required: true,
-  },
-  temperature: {
-    type: Number as PropType<number>,
-    required: true,
-  },
-  maxLength: {
-    type: Number as PropType<number>,
+    type: Object as PropType<{ 
+      name:string, 
+      temperature:number, 
+      maxLength:number, 
+      topP:number,
+      frequencyPenalty:number,
+      presencePenalty:number,
+      blocks:Block[] 
+    }>,
     required: true,
   },
 })
@@ -60,7 +60,7 @@ const props = defineProps({
 
 const editor = ref<HTMLDivElement|null>(null)
 document.addEventListener('mousedown', (event:MouseEvent) => {
-  console.log(props.temperature, props.maxLength)
+  console.log(typeof(props.page.temperature), typeof(props.page.maxLength), props.page.blocks)
   const input = event.target as HTMLElement;
   if (input.innerText == "Submit") {
     console.log(key.value)
@@ -71,7 +71,7 @@ document.addEventListener('mousedown', (event:MouseEvent) => {
 
     let inputArray = []
     let postDivider = false
-    for (let i = 0; i < blockElements.value.length; i++) {
+    for (let i = 0; i < props.page.blocks.length; i++) {
       postDivider = props.page.blocks[i].type == "DIVIDER" || postDivider
       if (blockElements.value[i] && postDivider) {
         inputArray.push(blockElements.value[i].getTextContent())
@@ -82,17 +82,15 @@ document.addEventListener('mousedown', (event:MouseEvent) => {
     openai.createCompletion({
       model: "text-davinci-002",
       prompt: inputString,
-      max_tokens: 64,
-      temperature: 0,
+      max_tokens: props.page.maxLength,
+      temperature: props.page.temperature,
+      top_p: props.page.topP,
+      frequency_penalty: props.page.frequencyPenalty,
+      presence_penalty: props.page.presencePenalty,
     }).then((response) => {
       // blockElements.value[blockElements.value.length-1].value = response.data.choices[0].text
       insertBlock(props.page.blocks.length-1, response.data.choices[0].text)
     });
-
-
-    // const blocks = document.getElementById('blocks')
-    // const text = blockElements.value.forEach((block) => {block})
-    // console.log(blocks?.children)
   } else {
     // Automatically focus on nearest block on click
     const blocks = document.getElementById('blocks')
@@ -151,6 +149,7 @@ document.addEventListener('mousedown', (event:MouseEvent) => {
         } else {
           // Otherwise add new empty Text block
           insertBlock(props.page.blocks.length-1, '')
+          // setBlockType(props.page.blocks.length-1, BlockType.Text)
         }
       }
   }
@@ -184,6 +183,7 @@ function insertBlock (blockIdx: number, value: string) {
       id: uuidv4(),
       type: BlockType.Text,
       details: {
+        // https://tiptap.dev/api/extensions/color for color
         value: '<p><strong>' + value + '</strong></p>',
       },
     })
