@@ -76,6 +76,7 @@ const page = ref({
   frequencyPenalty: 0,
   presencePenalty: 0,
   showSpinner: true,
+  showCopied: false,
   blocks:[
   {
     id: uuidv4(),
