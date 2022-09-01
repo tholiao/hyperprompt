@@ -75,7 +75,7 @@ const page = ref({
   topP: 1,
   frequencyPenalty: 0,
   presencePenalty: 0,
-  showSpinner: false,
+  showSpinner: true,
   blocks:[
   {
     id: uuidv4(),
