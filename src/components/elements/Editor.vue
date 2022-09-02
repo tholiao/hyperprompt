@@ -45,7 +45,6 @@ const editor = useEditor({
 
 watch(() => props.modelValue, value => {
   // try to use node_modules/@tiptap/extension-color/dist/packages/extension-color/src/color.d.ts
-  // editor.value?.commands.setColor("red")
   const isSame = editor.value?.getHTML() === value
   if (isSame) {
     return

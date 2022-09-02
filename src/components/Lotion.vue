@@ -5,7 +5,11 @@
       :class="props.page.name ? '' : 'empty'">
       {{ props.page.name || '' }}
     </h1>    
-    <p class="pb-10">OpenAI API Key: <input v-model="key" placeholder="Paste Here"/></p>
+
+    <div class="flex flex-row align-middle">
+      <p class="pb-10">OpenAI API Key: <input v-model="key" placeholder="Paste Here"/></p>
+      <!-- <button class="text-slate-400">Clear local storage</button> -->
+    </div>
 
     <!-- <div class="border-2 rounded-md border-black pl-20 p-2"> -->
       <draggable id="blocks" tag="div" :list="props.page.blocks"  handle=".handle"
@@ -47,14 +51,19 @@
 
 <script setup lang="ts">
 import { Configuration, OpenAIApi } from 'openai'
-import { ref, onBeforeUpdate, PropType } from 'vue'
+import { ref, onBeforeUpdate, PropType, inject } from 'vue'
 import { VueDraggableNext as draggable } from 'vue-draggable-next'
 import { Block, BlockType, isTextBlock } from '@/utils/types'
+import { VueCookies } from 'vue-cookies'
 // import { temperature, maxLength } from './Settings.vue'
 import BlockComponent from './Block.vue'
 import { v4 as uuidv4 } from 'uuid';
 
-const key = ref('')
+
+// const key = ref('')
+// if (!(localStorage.getItem('HyperPrompt_OpenAI_Key') === null)) {
+const key = localStorage.getItem('HyperPrompt_OpenAI_Key') ? ref(localStorage.getItem('HyperPrompt_OpenAI_Key')) : ref('')
+// }
 
 const props = defineProps({
   page: {
@@ -97,7 +106,6 @@ document.addEventListener('mousedown', (event:MouseEvent) => {
     props.page.showSpinner = true
     props.page.apiError = false
     // Use vue-cookie to store key for reuse
-    console.log(key.value)
     const configuration = new Configuration({
         apiKey: key.value,
     });
@@ -123,9 +131,8 @@ document.addEventListener('mousedown', (event:MouseEvent) => {
       presence_penalty: props.page.presencePenalty,
     }).then((response) => {
       props.page.showSpinner = false
-      // blockElements.value[blockElements.value.length-1].value = response.data.choices[0].text
       insertBlock(props.page.blocks.length-1, response.data.choices[0].text)
-      // setBlockType(props.page.blocks.length-1, BlockType.Text)
+      localStorage.setItem('HyperPrompt_OpenAI_Key', key.value)
     }).catch((e) => {
       props.page.showSpinner = false
       props.page.apiError = true

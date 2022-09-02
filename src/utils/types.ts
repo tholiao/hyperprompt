@@ -8,6 +8,7 @@ export interface Block {
   id: string,
   type: BlockType;
   details: Details;
+  color: string;
 }
 
 export enum BlockType {
