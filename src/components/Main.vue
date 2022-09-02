@@ -75,14 +75,15 @@ const page = ref({
   topP: 1,
   frequencyPenalty: 0,
   presencePenalty: 0,
-  showSpinner: true,
+  showSpinner: false,
   showCopied: false,
+  apiError: false,
   blocks:[
   {
     id: uuidv4(),
     type: BlockType.Text,
     details: {
-      value: '<p style="color:green">👋 Welcome! This is a private page for you to play around with.</p>'
+      value: '<p>👋 Welcome! This is a private page for you to play around with.</p>'
     },
   },
   {
