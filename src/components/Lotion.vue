@@ -94,13 +94,12 @@ document.addEventListener('mousedown', (event:MouseEvent) => {
     for (let i = 0; i < props.page.blocks.length; i++) {
       postDivider = props.page.blocks[i].type == "DIVIDER" || postDivider
       if (blockElements.value[i] && postDivider) {
-        copyArray.push(blockElements.value[i].getTextContent())
+        copyArray.push(blockElements.value[i].getInnerText().replaceAll("\n\n", "\n"))
       }
     }
     const inputString = copyArray.join('\n')
     navigator.clipboard.writeText(inputString).then((res) => {
       props.page.showCopied = true
-      console.log("copied!")
     })
   } else if (input.innerText == "Submit") {
     props.page.showSpinner = true
@@ -116,11 +115,10 @@ document.addEventListener('mousedown', (event:MouseEvent) => {
     for (let i = 0; i < props.page.blocks.length; i++) {
       postDivider = props.page.blocks[i].type == "DIVIDER" || postDivider
       if (blockElements.value[i] && postDivider) {
-        inputArray.push(blockElements.value[i].getTextContent())
+        inputArray.push(blockElements.value[i].getInnerText().replace("\n\n", "\n"))
       }
     }
     const inputString = inputArray.join('\n')
-    console.log(inputString)
     openai.createCompletion({
       model: "text-davinci-002",
       prompt: inputString,

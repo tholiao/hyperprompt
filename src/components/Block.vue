@@ -92,10 +92,16 @@ function getLastChild () {
 
 function getInnerContent () {
   if (isTextBlock(props.block.type)) {
-    return (content.value as any).$el.firstChild.firstChild.firstChild
+    return (content.value as any).$el //.firstChild.firstChild.firstChild
   } else {
-    return (content.value as any).$el.firstChild
+    return (content.value as any).$el //.firstChild
   }
+}
+
+function getInnerText () {
+  const innerContent = getInnerContent()
+  if (innerContent) return innerContent.parentElement ? innerContent.parentElement.innerText : innerContent.innerText
+  else return ''
 }
 
 function getTextContent () {
@@ -483,6 +489,7 @@ function clearSearch (searchTermLength: number, openedWithSlash: boolean = false
 
 defineExpose({
   content,
+  getInnerText,
   getTextContent,
   getHtmlContent,
   moveToStart,
